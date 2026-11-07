@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Barber Shop Manager</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eee8dc;--tx:#1f2e2c;--mu:#6b7773;--ac:#0f5a5c;--on:#fff;--ok:#2c8a68;--dg:#b3382f;--sl:#fffcf4;--sd:#cdc4b2;--bd:#ddd5c4;--r:6px 6px 14px var(--sd),-6px -6px 14px var(--sl);--rs:3px 3px 7px var(--sd),-3px -3px 7px var(--sl);--i:inset 3px 3px 8px var(--sd),inset -3px -3px 8px var(--sl);color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c2322;--tx:#e6eeec;--mu:#92a19d;--ac:#3fb3ae;--on:#0c1f1e;--ok:#4cc194;--dg:#ef7a70;--sl:#2a3534;--sd:#121817;--bd:#2f3b3a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1c2322;--tx:#e6eeec;--mu:#92a19d;--ac:#3fb3ae;--on:#0c1f1e;--ok:#4cc194;--dg:#ef7a70;--sl:#2a3534;--sd:#121817;--bd:#2f3b3a;color-scheme:dark}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 "Inter","Segoe UI",system-ui,sans-serif;min-height:100vh}
+button,input,select,textarea{font-family:inherit}
+:focus-visible{outline:2px solid var(--ac);outline-offset:3px}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.app{display:grid;grid-template-columns:236px minmax(0,1fr)}
+aside{position:sticky;top:0;height:100vh;padding:24px 16px;display:flex;flex-direction:column;gap:22px}
+.brand{display:flex;gap:12px;align-items:center;font-weight:800;font-size:17px}
+.logo{width:42px;height:42px;border-radius:14px;background:var(--ac);color:var(--on);display:grid;place-items:center;box-shadow:var(--r)}
+nav{display:flex;flex-direction:column;gap:12px}
+nav button{position:relative;display:flex;align-items:center;gap:12px;padding:13px 14px;border:0;border-radius:16px;background:var(--bg);color:var(--tx);font-weight:600;font-size:14px;cursor:pointer;box-shadow:var(--rs);transition:transform .2s,box-shadow .2s,color .2s}
+nav button:hover{transform:translateX(3px)}nav button.on{box-shadow:var(--i);color:var(--ac)}
+kbd{margin-left:auto;font:600 11px ui-monospace,Consolas,monospace;padding:2px 7px;border-radius:7px;background:var(--bg);box-shadow:var(--rs);color:var(--mu)}
+.b kbd{background:rgba(255,255,255,.22);box-shadow:none;color:inherit;margin-left:2px}
+.bg{background:#ff2d55;color:#fff;font:700 11px/1 "Inter",sans-serif;min-width:21px;height:21px;border-radius:11px;display:grid;place-items:center;padding:0 6px;margin-left:auto}.bg:empty{display:none}
+main{padding:26px 32px 48px;max-width:1500px;width:100%}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px}
+h1{font-size:26px;margin:0;font-weight:800}h2{font-size:16px;margin:0 0 12px}
+.chip{display:inline-flex;gap:7px;align-items:center;font-size:12px;color:var(--mu);margin-top:4px}.chip::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(44,138,104,.2)}
+.cd{background:var(--bg);border-radius:24px;padding:20px;margin-bottom:20px;box-shadow:var(--r)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.sp{justify-content:space-between}
+.mu{color:var(--mu);font-size:13px}.empty{color:var(--mu);text-align:center;padding:26px 10px}.empty .ic{width:40px;height:40px;opacity:.5;display:block;margin:0 auto 8px}
+input,select,textarea{padding:12px 15px;border:2px solid transparent;border-radius:14px;background:var(--bg);color:var(--tx);font-size:15px;min-width:0;flex:1 1 130px;box-shadow:var(--i);transition:border-color .2s}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ac)}
+.b{padding:11px 19px;border:0;border-radius:999px;background:var(--ac);color:var(--on);font-weight:700;font-size:14px;cursor:pointer;display:inline-flex;gap:8px;align-items:center;justify-content:center;text-decoration:none;box-shadow:var(--rs);transition:transform .15s,box-shadow .2s,filter .2s;white-space:nowrap}
+.b:hover{transform:translateY(-2px);filter:brightness(1.08)}.b:active{transform:scale(.94);box-shadow:var(--i)}
+.b.g{background:var(--bg);color:var(--tx)}.b.ok{background:var(--ok);color:var(--on)}.b.dg{background:var(--dg);color:var(--on)}
+.b:disabled{opacity:.45;cursor:not-allowed;transform:none;filter:grayscale(.6)}
+.b.ld{pointer-events:none}.b.ld::before{content:"";width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .6s linear infinite}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+.stats>div{border-radius:20px;padding:15px;text-align:center;box-shadow:var(--r)}.stats b{display:block;font-size:26px;color:var(--ac)}
+.now{text-align:center}.big{font-size:60px;font-weight:800;color:var(--ac);line-height:1.1}
+.tok{background:var(--ac);color:var(--on);border-radius:999px;padding:3px 11px;font-weight:700;font-size:13px}
+.av{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:var(--ac);box-shadow:var(--rs);flex:none}
+.qg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:20px}.g2>.cd{margin:0}
+.wl{max-height:calc(100vh - 150px);overflow:auto;padding:6px 10px 10px;margin:0 -10px}
+.swr{position:relative;margin:12px 0}.swr>span{position:absolute;top:50%;transform:translateY(-50%);font-weight:700;font-size:12px;color:var(--mu)}.swr .l{left:18px}.swr .r{right:18px}
+.li{position:relative;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:20px;background:var(--bg);box-shadow:var(--rs);touch-action:pan-y;user-select:none;transition:transform .3s,box-shadow .2s;cursor:grab}
+.li.sel{box-shadow:var(--i),0 0 0 2px var(--ac)}
+.pl{display:flex;gap:8px;flex-wrap:wrap}.pl label{position:relative;display:block;margin:0}.pl input{position:absolute;opacity:0;pointer-events:none}
+.pl span{display:block;padding:9px 16px;border-radius:999px;box-shadow:var(--rs);cursor:pointer;font-weight:600;font-size:14px;color:var(--tx);text-transform:none;letter-spacing:0;transition:.2s}
+.pl input:checked+span{background:var(--ac);color:var(--on);box-shadow:var(--i)}.pl input:focus-visible+span{outline:2px solid var(--ac);outline-offset:2px}
+.bar{display:flex;align-items:center;gap:10px;margin:8px 0}.bar .l{width:100px;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bar .t{flex:1;border-radius:8px;height:20px;overflow:hidden;box-shadow:var(--i)}.bar .f{height:100%;background:var(--ac);border-radius:8px}.bar .v{width:76px;text-align:right;font-size:13px;font-weight:700}
+.pie{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.lg{flex:1 1 150px;font-size:13px}.lg div{display:flex;align-items:center;gap:6px;margin:4px 0}.lg i{width:12px;height:12px;border-radius:4px;display:inline-block}
+svg.ch{width:100%;height:auto;display:block}.tabs-hide{display:none}
+details summary{cursor:pointer;margin-top:8px}
+#md{position:fixed;inset:0;display:grid;place-items:center;background:rgba(8,18,17,.5);backdrop-filter:blur(3px);z-index:50;animation:fi .2s}#md[hidden]{display:none}
+.mb{width:min(480px,92vw);max-height:92vh;overflow:auto;background:var(--bg);border-radius:28px;padding:26px;box-shadow:var(--r);animation:pop .3s cubic-bezier(.2,1.3,.4,1)}
+.mb h2{font-size:20px;margin:0 0 4px}.mb>div>label,.mb #mf>label{display:block;font-size:12px;font-weight:700;color:var(--mu);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.05em}.mb input:not([type=radio]),.mb textarea{width:100%}
+.kt{width:100%;border-collapse:collapse;font-size:14px}.kt td{padding:7px 4px;border-bottom:1px solid var(--bd)}.kt td:first-child{width:120px}.fld{flex:1 1 200px;display:flex;flex-direction:column;gap:6px}.fld label{font-size:12px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.04em}.fld input{flex:none;width:100%}.fld small{color:var(--mu);font-size:12px}
+#tw{position:fixed;right:22px;bottom:22px;display:flex;flex-direction:column;gap:12px;align-items:flex-end;z-index:60}
+.ts{display:flex;gap:14px;align-items:center;padding:12px 16px;border-radius:16px;background:var(--bg);box-shadow:var(--r);font-weight:600;border-left:5px solid var(--ok);animation:tin .35s cubic-bezier(.2,1.2,.4,1);max-width:min(420px,90vw)}
+.ts.er{border-color:var(--dg)}.ts.out{animation:tout .25s forwards}
+@keyframes sp{to{transform:rotate(360deg)}}@keyframes fi{from{opacity:0}}@keyframes pop{from{opacity:0;transform:scale(.9) translateY(14px)}}
+@keyframes tin{from{opacity:0;transform:translateX(60px)}}@keyframes tout{to{opacity:0;transform:translateX(60px)}}
+@keyframes inr{from{opacity:0;transform:translateX(48px)}}@keyframes inl{from{opacity:0;transform:translateX(-48px)}}
+.inr{animation:inr .35s cubic-bezier(.2,.9,.3,1)}.inl{animation:inl .35s cubic-bezier(.2,.9,.3,1)}
+@media not all and (min-width:1100px) and (hover:hover) and (pointer:fine){.qg{grid-template-columns:minmax(0,1fr)}.wl{max-height:none}}
+@media not all and (min-width:900px) and (hover:hover) and (pointer:fine){.app{display:block}.hk,.kc{display:none}.li,.li .row{flex-wrap:wrap!important}main{padding:16px 14px 100px}h1{font-size:22px}.stats{gap:10px}.stats b{font-size:20px}
+aside{position:fixed;left:0;right:0;bottom:0;top:auto;height:auto;z-index:20;padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));background:#121212;border-radius:22px 22px 0 0}.brand{display:none}
+nav{flex-direction:row;width:100%}nav button{flex:1;flex-direction:column;gap:3px;background:none;box-shadow:none;color:#fff;font-size:10px;padding:6px 2px}nav button.on{color:#5fe0d8;box-shadow:none}nav button:hover{transform:none}nav kbd,.b kbd{display:none}
+.bg{position:absolute;top:-2px;left:54%;margin:0}#tw{bottom:calc(84px + env(safe-area-inset-bottom,0px));right:12px}}
+#gate{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:80;padding:16px}#gate[hidden]{display:none}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute"><symbol id="i-q" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol><symbol id="i-b" viewBox="0 0 24 24"><path d="M6 9a3 3 0 100-6 3 3 0 000 6zM6 21a3 3 0 100-6 3 3 0 000 6zM20 4L8.1 15.9M14.5 14.5L20 20M8.1 8.1L12 12"/></symbol><symbol id="i-p" viewBox="0 0 24 24"><path d="M3 7h18v12H3zM3 7l3-3h12l3 3M16 13h2"/></symbol><symbol id="i-r" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol><symbol id="i-c" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM22 21v-2a4 4 0 00-3-3.9M16 3.1a4 4 0 010 7.8"/></symbol><symbol id="i-s" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol></svg>
+<div class="app">
+<aside><div class="brand"><div class="logo"><svg class="ic"><use href="#i-b"/></svg></div><span id="shopn">Barber Shop</span></div>
+<nav id="nav" aria-label="Sections"><button data-t="q" class="on"><svg class="ic"><use href="#i-q"/></svg><span>Queue</span><i class="bg" id="bq"></i><kbd>1</kbd></button><button data-t="b"><svg class="ic"><use href="#i-b"/></svg><span>Barbers</span><kbd>2</kbd></button><button data-t="p"><svg class="ic"><use href="#i-p"/></svg><span>Payroll</span><kbd>3</kbd></button><button data-t="r"><svg class="ic"><use href="#i-r"/></svg><span>Reports</span><kbd>4</kbd></button><button data-t="c"><svg class="ic"><use href="#i-c"/></svg><span>Clients</span><kbd>5</kbd></button><button data-t="s"><svg class="ic"><use href="#i-s"/></svg><span>Settings</span><kbd>6</kbd></button></nav></aside>
+<main id="mn"><header class="top"><div><div class="mu" id="bc"></div><h1 id="pt">Queue</h1><div class="chip" id="sync">Connecting…</div></div><div class="row"><button class="b g" id="theme" title="Toggle theme (T)" aria-label="Toggle theme">◐</button><button class="b g hk" onclick="help()" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">?</button></div></header>
+<section id="q"></section><section id="b" class="tabs-hide"></section><section id="p" class="tabs-hide"></section><section id="r" class="tabs-hide"></section><section id="c" class="tabs-hide"></section><section id="s" class="tabs-hide"></section><section id="a" class="tabs-hide"></section></main></div>
+<div id="tw" aria-live="polite"></div><div id="md" hidden></div><div id="gate" hidden></div>
+<script>
+const SERVICES=[["Haircut",150],["Beard trim",80],["Haircut + Beard",220],["Shave",70],["Head massage",100],["Hair colour",400],["Custom",0]];
+const TABS=["q","b","p","r","c","s"],NAMES={q:"Queue",b:"Barbers",p:"Payroll",r:"Reports",c:"Clients",s:"Settings"};
+const KEYS=[["1 – 6","Switch section"],["N","New client"],["S","Start next service"],["P","Collect payment"],["↑ ↓","Select waiting client"],["Enter","Start selected client / confirm"],["Esc","Close window"],["?","Show shortcuts"]];
+const S={queue:[],barbers:[],customerProfiles:{},cfg:{shop:"My Barber Shop",avg:15,cc:"91"}};
+let db=null,tab="q",sel=0,mdOpen=false;const DESK=matchMedia("(min-width:900px) and (hover:hover) and (pointer:fine)");
+const LOCAL_KEY="barber-shop-manager-v2";
+function persistLocal(){try{localStorage.setItem(LOCAL_KEY,JSON.stringify(S))}catch(e){}}
+function restoreLocal(){try{const x=JSON.parse(localStorage.getItem(LOCAL_KEY)||"null");if(x){S.queue=Array.isArray(x.queue)?x.queue:[];S.barbers=Array.isArray(x.barbers)?x.barbers:[];S.customerProfiles=x.customerProfiles||{};S.cfg={...S.cfg,...(x.cfg||{})}}}catch(e){}}
+restoreLocal();
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ld=iso=>{const d=iso?new Date(iso):new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const today=()=>ld(),month=()=>ld().slice(0,7);
+const money=n=>"₹"+Math.round(n).toLocaleString("en-IN");
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const customerKey=x=>String(x.phone||"").replace(/\D/g,"").slice(-10)||String(x.name||"").trim().toLowerCase().replace(/[^a-z0-9]/g,"");
+const dateTime=ms=>ms?new Date(ms).toLocaleString():"Time not recorded";
+const waiting=()=>S.queue.filter(x=>x.date===today()&&x.status==="waiting").sort((a,b)=>a.token-b.token);
+const serving=()=>S.queue.filter(x=>x.date===today()&&x.status==="serving").sort((a,b)=>a.token-b.token);
+const empty=t=>`<div class="empty"><svg class="ic"><use href="#i-c"/></svg>${t}</div>`;
+
+async function save(col,id,obj){const arr=col==="queue"?S.queue:S.barbers,i=arr.findIndex(x=>x.id===id);if(i>=0)arr[i]=obj;else arr.push(obj);persistLocal();render(true);
+  if(db){try{await db.collection(col).doc(id).set(obj)}catch(e){flash("Could not save: only the owner or invited staff can edit.")}}}
+async function del(col,id){const k=col==="queue"?"queue":"barbers";S[k]=S[k].filter(x=>x.id!==id);persistLocal();render(true);if(db){try{await db.collection(col).doc(id).delete()}catch(e){}}}
+async function saveCfg(){render(true);if(db){try{await db.doc("meta/cfg").set(S.cfg)}catch(e){}}}
+function flash(m){$("sync").textContent=m}
+function phoneFull(p){let d=String(p||"").replace(/\D/g,"");if(d.length===10)d=S.cfg.cc+d;return d}
+function waLink(c,msg){return "https://wa.me/"+phoneFull(c.phone)+"?text="+encodeURIComponent(msg)}
+function ahead(c){return S.queue.filter(x=>x.date===today()&&x.status==="waiting"&&x.token<c.token).length}
+function msgFor(c){const a=ahead(c),w=a*S.cfg.avg;
+  if(c.status==="serving")return `Hello ${c.name}, it’s your turn at ${S.cfg.shop}! Token #${c.token}. Please come to the chair now.`;
+  return `Hello ${c.name}, your token at ${S.cfg.shop} is #${c.token}. ${a} client(s) ahead of you, about ${w} min wait. We’ll message you when it’s your turn.`}
+
+/* ---------- UI helpers: toast + modal (no browser dialogs) ---------- */
+function toast(m,t,a){const e=document.createElement("div");e.className="ts "+(t||"");e.innerHTML=`<span>${esc(m)}</span>`+(a?`<a class="b" target="_blank" rel="noopener" href="${a.h}">${a.t}</a>`:"");$("tw").append(e);setTimeout(()=>{e.classList.add("out");setTimeout(()=>e.remove(),260)},a?8000:3500)}
+function ask(o){return new Promise(res=>{const m=$("md"),prev=document.activeElement;
+  m.innerHTML=`<div class="mb" role="dialog" aria-modal="true"><h2>${o.t}</h2>${o.p?`<div class="mu">${o.p}</div>`:""}<div id="mf">${o.f||""}</div><div class="row" style="justify-content:flex-end;margin-top:22px"><button class="b g" id="mc">${o.c||"Cancel"} <kbd>Esc</kbd></button><button class="b ${o.d?"dg":"ok"}" id="mo">${o.ok||"Confirm"} <kbd>↵</kbd></button></div></div>`;
+  m.hidden=false;mdOpen=true;
+  const fin=v=>{m.hidden=true;m.innerHTML="";mdOpen=false;document.removeEventListener("keydown",kd,true);if(prev&&prev.focus)prev.focus();res(v)};
+  const val=()=>{const v={};m.querySelectorAll("[name]").forEach(i=>{if(i.type==="radio"&&!i.checked)return;v[i.name]=i.value});return v};
+  const go=()=>{$("mo").classList.add("ld");setTimeout(()=>fin(val()),380)};
+  const kd=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();fin(null)}
+    else if(e.key==="Enter"&&e.target.tagName!=="TEXTAREA"&&e.target.id!=="mc"){e.preventDefault();e.stopPropagation();go()}
+    else if(e.key==="Tab"){const f=[...m.querySelectorAll("input:not([type=radio]),select,textarea,button,input[type=radio]:checked")],i=f.indexOf(document.activeElement),n=e.shiftKey?(i<=0?f.length-1:i-1):(i+1)%f.length;e.preventDefault();f[n].focus()}};
+  document.addEventListener("keydown",kd,true);
+  $("mo").onclick=go;$("mc").onclick=()=>fin(null);m.onclick=e=>{if(e.target===m)fin(null)};
+  const f=m.querySelector("input:not([type=radio]),select,textarea");if(f&&DESK.matches){f.focus();if(f.select)f.select()}else $("mo").focus()})}
+function help(){ask({t:"Keyboard shortcuts",f:`<table class="kt">${KEYS.map(k=>`<tr><td><kbd style="margin:0">${k[0]}</kbd></td><td>${k[1]}</td></tr>`).join("")}</table>`,ok:"Got it",c:"Close"})}
+
+/* ---------- Queue ---------- */
+function renderQ(){
+  const keep=["cn","cp","cs","cx","cr","cb"].map(i=>$(i)?.value);
+  const t=S.queue.filter(x=>x.date===today()).sort((a,b)=>a.token-b.token);
+  const sv=t.filter(x=>x.status==="serving"),wait=t.filter(x=>x.status==="waiting"),dn=t.filter(x=>x.status==="done");
+  const rev=dn.reduce((s,x)=>s+(+x.price||0),0);
+  sel=Math.max(0,Math.min(sel,wait.length-1));
+  const bopts=S.barbers.map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join("");
+  const sopts=SERVICES.map(s=>`<option value="${s[0]}|${s[1]}">${s[0]}</option>`).join("");
+  let h=`<div class="qg"><div><div class="stats"><div><b>${wait.length}</b><span class="mu">Waiting</span></div><div><b>${dn.length}</b><span class="mu">Completed today</span></div><div><b>${money(rev)}</b><span class="mu">Revenue today</span></div></div>`;
+  h+=`<div class="cd now"><div class="mu">Now serving</div>`;
+  h+=sv.length?sv.map(c=>`<div class="big">#${c.token}</div><div><b>${esc(c.name)}</b> · ${esc(c.service)} · ${esc(S.barbers.find(b=>b.id===c.barber)?.name||"Any barber")}</div><div class="row" style="justify-content:center;margin-top:12px"><a class="b g" href="tel:${phoneFull(c.phone)}">📞 Call</a><button class="b ok" onclick="finish('${c.id}')">✔ Collect payment · ${money(c.price)} <kbd>P</kbd></button></div>`).join(""):`<div class="big">—</div>`;
+  h+=`<div style="margin-top:14px"><button class="b" onclick="startNext()" ${wait.length?"":"disabled"}>▶ Start next service <kbd>S</kbd></button></div></div>`;
+  h+=`<div class="cd" id="addf"><h2>New client <span class="mu hk">(N)</span></h2><div class="mu" style="margin:-6px 0 12px">Next token: <b>#${Math.max(0,...t.map(x=>x.token))+1}</b> · restarts at #1 every day</div><div class="row"><input id="cn" list="dn" oninput="fillC('n')" placeholder="Name" autocomplete="off"><input id="cp" list="dp" oninput="fillC('p')" placeholder="Phone (10 digits)" inputmode="tel" autocomplete="off"></div>${dl()}<div class="mu" id="cinfo"></div>
+  <div class="row" style="margin-top:10px"><select id="cs" onchange="togC();setP()">${sopts}</select><input id="cx" placeholder="Type service name" style="display:none"><input id="cr" type="number" inputmode="numeric" min="0" placeholder="Price ₹"><select id="cb"><option value="">Any barber</option>${bopts}</select><button class="b" onclick="addC()">Get token <kbd>⌃↵</kbd></button></div></div></div>`;
+  h+=`<div class="cd"><h2>Waiting list <span class="mu">· swipe → start, ← remove</span></h2><div class="wl">`;
+  h+=wait.length?wait.map((c,i)=>`<div class="swr"><span class="l">▶ Start</span><span class="r">Remove ✕</span><div class="li sw${i===sel?" sel":""}" data-id="${c.id}" data-i="${i}"><div class="row" style="flex-wrap:nowrap"><div class="av">${esc((c.name||"?").trim().charAt(0).toUpperCase())}</div><div><span class="tok">#${c.token}</span> <b>${esc(c.name)}</b><div class="mu">${esc(c.service)} · ${money(c.price)} · Est. wait ${ahead(c)*S.cfg.avg} min</div></div></div>
+  <div class="row" style="flex-wrap:nowrap"><button class="b" onclick="startNext('${c.id}')">Start</button><a class="b g" href="tel:${phoneFull(c.phone)}" aria-label="Call">📞</a><a class="b ok" target="_blank" rel="noopener" href="${waLink(c,msgFor(c))}">WhatsApp</a><button class="b g" onclick="skip('${c.id}')" aria-label="Remove">✕</button></div></div></div>`).join(""):empty("No clients waiting");
+  h+=`</div></div></div>`;
+  $("q").innerHTML=h;["cn","cp","cs","cx","cr","cb"].forEach((i,j)=>{if(keep[j]!=null&&keep[j]!=="")$(i).value=keep[j]});togC();
+}
+function updSel(){document.querySelectorAll("#q .li").forEach(x=>{const on=+x.dataset.i===sel;x.classList.toggle("sel",on);if(on)x.scrollIntoView({block:"nearest",behavior:"smooth"})})}
+function addC(){
+  const n=$("cn").value.trim(),p=$("cp").value.trim();if(!n||!p){toast("Enter the client’s name and phone","er");(n?$("cp"):$("cn")).focus();return}
+  const raw=$("cs").value.split("|")[0],svc=raw==="Custom"?($("cx").value.trim()||"Custom"):raw,pr=$("cr").value;if(pr===""||+pr<0){toast("Enter the price","er");$("cr").focus();return}
+  const tk=Math.max(0,...S.queue.filter(x=>x.date===today()).map(x=>x.token))+1;
+  const c={id:uid(),token:tk,name:n,phone:p,service:svc,price:+pr,barber:$("cb").value,status:"waiting",date:today(),at:Date.now()};
+  const ck=customerKey(c);c.customerKey=ck;const old=S.customerProfiles[ck]||{};
+  S.customerProfiles[ck]={...old,key:ck,name:old.name||c.name,phone:c.phone,createdAt:old.createdAt||Date.now(),updatedAt:Date.now()};
+  persistLocal();
+  if(db)db.collection("customers").doc(ck).set(S.customerProfiles[ck],{merge:true}).catch(()=>flash("Token created; profile saved on this device, cloud sync failed."));
+  ["cn","cp","cx","cr"].forEach(i=>$(i).value="");$("cinfo").textContent="";
+  save("queue",c.id,c);toast(`Token #${tk} issued to ${n}`,"",{t:"WhatsApp",h:waLink(c,msgFor(c))});$("cn").focus();
+}
+function setP(){const p=$("cs").value.split("|")[1];$("cr").value=+p?p:""}
+function togC(){const x=$("cx");if(x)x.style.display=$("cs").value.startsWith("Custom")?"":"none"}
+function startNext(id){const w=id?S.queue.find(x=>x.id===id):waiting()[0];if(!w||w.status!=="waiting"){toast("No clients waiting","er");return}
+  w.status="serving";save("queue",w.id,w);toast(`#${w.token} ${w.name} is now in the chair`,"",{t:"Notify",h:waLink(w,msgFor(w))})}
+async function finish(id){
+  const c=S.queue.find(x=>x.id===id);if(!c)return;
+  const v=await ask({t:"Collect payment",p:`#${c.token} · ${esc(c.name)} · ${esc(c.service)}`,ok:"Mark as paid",f:`<label for="a">Amount received (₹)</label><input id="a" name="a" type="number" min="0" value="${+c.price||0}"><label>Payment method</label><div class="pl">${["Cash","UPI","Card"].map((m,i)=>`<label><input type="radio" name="m" value="${m}"${i?"":" checked"}><span>${m}</span></label>`).join("")}</div>`});
+  if(!v)return;const a=+v.a;if(v.a===""||isNaN(a)||a<0){toast("Enter a valid amount","er");return finish(id)}
+  c.price=a;c.status="done";c.doneAt=new Date().toISOString();c.method=v.m;
+  const k=customerKey(c),pr={...(S.customerProfiles[k]||{}),key:k,name:c.name,phone:c.phone,updatedAt:Date.now()};
+  S.customerProfiles[k]=pr;if(db)db.collection("customers").doc(k).set(pr).catch(()=>{});
+  save("queue",id,c);toast(`${money(a)} received from ${c.name} via ${v.m}`);
+}
+async function skip(id){const c=S.queue.find(x=>x.id===id);if(!c)return;
+  if(await ask({t:"Remove from queue?",p:`${esc(c.name)} (#${c.token}) will be removed from today’s queue.`,ok:"Remove",d:1})){c.status="skipped";save("queue",id,c);toast(c.name+" removed from queue")}}
+
+/* ---------- Barbers ---------- */
+function renderB(){
+  let h=`<div class="cd"><h2>Add barber</h2><div class="row"><input id="bn" placeholder="Name"><input id="bp" placeholder="Phone" inputmode="tel"><input id="bs" placeholder="Monthly base salary ₹" type="number"><input id="bc" placeholder="Commission %" type="number"><button class="b" onclick="addB()">Add barber</button></div></div><div class="g2">`;
+  h+=S.barbers.length?S.barbers.map(b=>{const n=S.queue.filter(x=>x.barber===b.id&&x.status==="done"&&x.date===today()).length;
+    return `<div class="cd row sp"><div class="row" style="flex-wrap:nowrap"><div class="av">${esc((b.name||"?").charAt(0).toUpperCase())}</div><div><b>${esc(b.name)}</b><div class="mu">Base ${money(b.base)} · ${b.comm}% commission · ${n} done today</div></div></div>
+    <div class="row"><a class="b g" href="tel:${phoneFull(b.phone)}">📞</a><a class="b ok" target="_blank" rel="noopener" href="https://wa.me/${phoneFull(b.phone)}">WhatsApp</a><button class="b g" onclick="delB('${b.id}')">Delete</button></div></div>`}).join(""):`<div class="cd">${empty("Add your first barber")}</div>`;
+  $("b").innerHTML=h+"</div>";
+}
+function addB(){const n=$("bn").value.trim();if(!n){toast("Enter the barber’s name","er");return}const b={id:uid(),name:n,phone:$("bp").value,base:+$("bs").value||0,comm:+$("bc").value||0,bonuses:[],payments:[]};save("barbers",b.id,b);toast(n+" added")}
+async function delB(id){const b=S.barbers.find(x=>x.id===id);if(b&&await ask({t:"Delete barber?",p:esc(b.name)+" and their payroll records will be removed.",ok:"Delete",d:1}))del("barbers",id)}
+
+/* ---------- Payroll ---------- */
+function calc(b){const m=month(),rev=S.queue.filter(x=>x.barber===b.id&&x.status==="done"&&x.doneAt&&ld(x.doneAt).slice(0,7)===m).reduce((s,x)=>s+(+x.price||0),0);
+  const comm=rev*b.comm/100,bon=(b.bonuses||[]).filter(x=>x.m===m).reduce((s,x)=>s+x.amt,0),paid=(b.payments||[]).filter(x=>x.m===m).reduce((s,x)=>s+x.amt,0);
+  return{rev,comm,bon,paid,due:b.base+comm+bon-paid}}
+function renderP(){
+  let h=`<div class="cd"><h2>Festival bonus (all barbers)</h2><div class="row"><input id="fn" placeholder="Festival, e.g. Diwali"><input id="fa" type="number" placeholder="Amount ₹ each"><button class="b" onclick="festAll()">Give to all</button></div></div><div class="g2">`;
+  h+=S.barbers.length?S.barbers.map(b=>{const c=calc(b);
+    return `<div class="cd"><div class="row sp"><b>${esc(b.name)}</b><span class="tok">${month()}</span></div><div class="mu" style="margin-top:6px">Base ${money(b.base)} + Commission ${money(c.comm)} (on ${money(c.rev)}) + Bonus ${money(c.bon)} − Paid ${money(c.paid)}</div>
+    <div class="row sp" style="margin-top:10px"><div><span class="mu">Balance due</span><div class="big" style="font-size:30px">${money(c.due)}</div></div><div class="row"><button class="b ok" onclick="pay('${b.id}')">Pay…</button><button class="b g" onclick="bonus('${b.id}')">+ Bonus</button></div></div>
+    ${(b.payments||[]).slice(-3).reverse().map(x=>`<div class="mu">Paid ${money(x.amt)} on ${x.d} ${esc(x.note||"")}</div>`).join("")}</div>`}).join(""):`<div class="cd">${empty("No barbers yet")}</div>`;
+  $("p").innerHTML=h+"</div>";
+}
+function festAll(){const n=$("fn").value.trim(),a=+$("fa").value;if(!n||!a){toast("Enter festival name and amount","er");return}
+  S.barbers.forEach(b=>{b.bonuses=[...(b.bonuses||[]),{n,amt:a,m:month()}];save("barbers",b.id,b)});toast("Bonus given to all barbers")}
+async function bonus(id){const b=S.barbers.find(x=>x.id===id),v=await ask({t:"Add bonus",p:esc(b.name),ok:"Add bonus",f:`<label for="n">Bonus name</label><input id="n" name="n" type="text" placeholder="Eid, performance…"><label for="a">Amount (₹)</label><input id="a" name="a" type="number" min="1">`});
+  if(!v)return;const a=+v.a;if(!v.n.trim()||!(a>0)){toast("Enter bonus name and amount","er");return}
+  b.bonuses=[...(b.bonuses||[]),{n:v.n.trim(),amt:a,m:month()}];save("barbers",id,b);toast("Bonus added")}
+async function pay(id){const b=S.barbers.find(x=>x.id===id),c=calc(b),v=await ask({t:"Pay barber",p:`${esc(b.name)} · balance due ${money(c.due)}`,ok:"Record payment",f:`<label for="a">Amount (₹)</label><input id="a" name="a" type="number" min="1" value="${Math.max(0,Math.round(c.due))}"><label for="n">Note</label><input id="n" name="n" type="text" placeholder="Cash / UPI / advance">`});
+  if(!v)return;const a=+v.a;if(!(a>0)){toast("Enter a valid amount","er");return}
+  b.payments=[...(b.payments||[]),{amt:a,m:month(),d:today(),note:v.n||""}];save("barbers",id,b);toast(`${money(a)} paid to ${b.name}`)}
+
+/* ---------- Clients ---------- */
+function custs(){const m={};
+  S.queue.filter(x=>x.status!=="skipped").sort((a,b)=>(a.at||0)-(b.at||0)).forEach(x=>{const k=customerKey(x);if(!k)return;
+    const c=m[k]||(m[k]={key:k,hist:[],arrivals:[],visits:0,spent:0});c.name=x.name;c.phone=x.phone;c.arrivals.push(x);
+    if(x.status==="done"){c.visits++;c.spent+=+x.price||0;c.hist.push(x);c.service=x.service;c.price=x.price;c.barber=x.barber;c.last=x.doneAt;if(x.rating)c.ratings=(c.ratings||[]).concat(+x.rating)}});
+  return Object.values(m).map(c=>{const p=S.customerProfiles[c.key]||{};return{...c,...p,key:c.key,name:p.name||c.name,phone:p.phone||c.phone,profileNote:p.profileNote||"",nextVisit:p.nextVisit||c.hist.slice().reverse().find(x=>x.nextVisit)?.nextVisit||""}})
+  .filter(c=>c.visits||c.arrivals.length).sort((a,b)=>(b.arrivals.at(-1)?.at||0)-(a.arrivals.at(-1)?.at||0))}
+function renderC(){$("c").innerHTML=`<div class="cd"><input id="cq" placeholder="Search name or phone" oninput="listC()" style="width:100%"></div><div id="cl" class="g2"></div>`;listC()}
+function listC(){const q=($("cq")?.value||"").toLowerCase().trim(),all=custs(),l=all.filter(c=>!q||c.name.toLowerCase().includes(q)||String(c.phone).includes(q));
+  $("cl").innerHTML=l.length?l.map(c=>`<div class="cd"><div class="row sp"><div class="row" style="flex-wrap:nowrap"><div class="av">${esc((c.name||"?").charAt(0).toUpperCase())}</div><div><b>${esc(c.name)}</b><div class="mu">${esc(c.phone)} · ${c.visits} visit(s) · ${money(c.spent)} spent</div></div></div>
+  <div class="row"><a class="b g" href="tel:${phoneFull(c.phone)}">📞</a><a class="b ok" target="_blank" rel="noopener" href="${waLink(c,`Hello ${c.name}, thank you for visiting ${S.cfg.shop}! We would love to see you again.`)}">WhatsApp</a><button class="b" onclick="addFrom('${c.key}')">＋ Queue</button></div></div>
+  <div class="mu" style="margin-top:8px">Last service: ${esc(c.service||"—")} ${c.price!=null?money(c.price):""} ${c.last?"on "+ld(c.last):""}</div>
+  
+  <details><summary class="mu">Visit history (${c.arrivals.length})</summary>${c.arrivals.slice().reverse().map(x=>`<div class="mu" style="padding:6px 0;border-top:1px solid var(--bd)"><b>${ld(x.at?new Date(x.at).toISOString():x.date)}</b> · ${dateTime(x.at)} · ${esc(x.service||"—")} · ${esc(x.status||"")}${x.status==="done"?" · "+money(x.price):""}</div>`).join("")}</details></div>`).join(""):`<div class="cd">${empty(all.length?"No match":"Clients appear here after their first token.")}</div>`}
+function addFrom(k){const c=custs().find(x=>x.key===k);if(!c)return;
+  const tk=Math.max(0,...S.queue.filter(x=>x.date===today()).map(x=>x.token))+1;
+  const n={id:uid(),token:tk,name:c.name,phone:c.phone,service:c.service||"Haircut",price:+(c.price||0),barber:c.barber||"",status:"waiting",date:today(),at:Date.now(),customerKey:c.key};
+  save("queue",n.id,n);toast(`Token #${tk} issued to ${c.name}`)}
+function saveCustomerProfile(k){const c=custs().find(x=>x.key===k);if(!c)return;
+  const p={...(S.customerProfiles[k]||{}),key:k,name:c.name,phone:c.phone,profileNote:$("profile-note-"+k)?.value||"",updatedAt:Date.now()};
+  S.customerProfiles[k]=p;persistLocal();
+  if(db)db.collection("customers").doc(k).set(p).catch(()=>flash("Profile saved on this device; cloud sync failed."));toast("Profile saved for "+c.name)}
+function dl(){const l=custs();return `<datalist id="dn">${l.map(c=>`<option value="${esc(c.name)}">${esc(c.phone)}</option>`).join("")}</datalist><datalist id="dp">${l.map(c=>`<option value="${esc(c.phone)}">${esc(c.name)}</option>`).join("")}</datalist>`}
+function fillC(s){const v=s==="n"?$("cn").value.trim().toLowerCase():$("cp").value.replace(/\D/g,"").slice(-10),i=$("cinfo");if(!v){i.textContent="";return}
+  const c=custs().find(c=>s==="n"?c.name.toLowerCase()===v:c.key===v);if(!c){i.textContent="";return}
+  if(s==="n"&&!$("cp").value)$("cp").value=c.phone;if(s==="p"&&!$("cn").value)$("cn").value=c.name;
+  const o=[...$("cs").options].find(o=>o.value.startsWith(c.service+"|"));if(o)$("cs").value=o.value;else{$("cs").value="Custom|0";$("cx").value=c.service||""}
+  togC();$("cb").value=c.barber||"";if(c.price!=null)$("cr").value=c.price;
+  i.textContent=`Returning client · ${c.visits} visit(s) · last: ${c.service||"visit"} ${c.price!=null?money(c.price):""}`}
+
+/* ---------- Reports ---------- */
+const PAL=["#0f5a5c","#2c8a68","#d9a441","#3d6fa8","#8a5a9e","#c9694b","#8d8a82"];
+function group(arr,key){const m={};arr.forEach(x=>{const k=key(x);m[k]=(m[k]||0)+(+x.price||0)});return Object.entries(m).sort((a,b)=>b[1]-a[1])}
+function renderR(){
+  const dn=S.queue.filter(x=>x.status==="done"&&x.doneAt),td=today(),m=month(),sum=a=>a.reduce((s,x)=>s+(+x.price||0),0);
+  const dT=dn.filter(x=>ld(x.doneAt)===td),dM=dn.filter(x=>ld(x.doneAt).slice(0,7)===m),avg=dM.length?sum(dM)/dM.length:0;
+  let h=`<div class="stats"><div><span class="mu">Today</span><b>${money(sum(dT))}</b><span class="mu">${dT.length} clients</span></div><div><span class="mu">This month</span><b>${money(sum(dM))}</b><span class="mu">${dM.length} clients</span></div><div><span class="mu">Avg / client</span><b>${money(avg)}</b><span class="mu">this month</span></div></div>`;
+  if(!dM.length){$("r").innerHTML=h+`<div class="cd">${empty("Charts appear once payments are collected.")}</div>`;return}
+  const sv=group(dM,x=>x.service),tot=sum(dM);let a0=-Math.PI/2,paths="";
+  sv.forEach(([n,v],i)=>{const f=v/tot,a1=a0+f*2*Math.PI,c=PAL[i%PAL.length];
+    if(f>=0.999)paths+=`<circle cx="80" cy="80" r="70" fill="${c}"/>`;else paths+=`<path d="M80 80 L${80+70*Math.cos(a0)} ${80+70*Math.sin(a0)} A70 70 0 ${f>.5?1:0} 1 ${80+70*Math.cos(a1)} ${80+70*Math.sin(a1)} Z" fill="${c}"/>`;a0=a1});
+  h+=`<div class="g2"><div class="cd"><h2>Revenue by service (this month)</h2><div class="pie"><svg viewBox="0 0 160 160" width="160" height="160">${paths}</svg><div class="lg">${sv.map(([n,v],i)=>`<div><i style="background:${PAL[i%PAL.length]}"></i>${esc(n)} · ${money(v)} (${Math.round(v/tot*100)}%)</div>`).join("")}</div></div></div>`;
+  const bb=group(dM,x=>S.barbers.find(b=>b.id===x.barber)?.name||"Any / unassigned"),mx=bb[0][1]||1;
+  h+=`<div class="cd"><h2>Revenue by barber (this month)</h2>${bb.map(([n,v])=>`<div class="bar"><div class="l">${esc(n)}</div><div class="t"><div class="f" style="width:${v/mx*100}%"></div></div><div class="v">${money(v)}</div></div>`).join("")}</div>`;
+  const days=[];for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=ld(d.toISOString());days.push({k,l:k.slice(8)+"/"+k.slice(5,7),v:sum(dn.filter(x=>ld(x.doneAt)===k))})}
+  const w=days.slice(7),wm=Math.max(1,...w.map(x=>x.v));
+  h+=`<div class="cd"><h2>Last 7 days</h2><svg class="ch" viewBox="0 0 320 150">${w.map((x,i)=>{const bh=x.v/wm*100,bx=10+i*44;return `<rect x="${bx}" y="${120-bh}" width="32" height="${bh}" rx="6" fill="var(--ac)"/><text x="${bx+16}" y="${114-bh}" text-anchor="middle" font-size="9" fill="var(--tx)">${x.v?Math.round(x.v):""}</text><text x="${bx+16}" y="138" text-anchor="middle" font-size="9" fill="var(--mu)">${x.l}</text>`}).join("")}<line x1="0" y1="120" x2="320" y2="120" stroke="var(--bd)"/></svg></div>`;
+  const lm=Math.max(1,...days.map(x=>x.v)),pts=days.map((x,i)=>[34+i*(278/13),110-x.v/lm*95]),ps=pts.map(p=>p.join(",")).join(" ");
+  h+=`<div class="cd"><h2>Daily revenue trend (14 days)</h2><svg class="ch" viewBox="0 0 320 150"><line x1="34" y1="110" x2="312" y2="110" stroke="var(--bd)"/><line x1="34" y1="15" x2="312" y2="15" stroke="var(--bd)" stroke-dasharray="3"/><text x="30" y="18" text-anchor="end" font-size="9" fill="var(--mu)">${Math.round(lm)}</text><text x="30" y="113" text-anchor="end" font-size="9" fill="var(--mu)">0</text><polygon points="34,110 ${ps} 312,110" fill="var(--ac)" opacity=".15"/><polyline points="${ps}" fill="none" stroke="var(--ac)" stroke-width="2.5" stroke-linejoin="round"/>${pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="var(--ac)"/>`).join("")}${days.map((x,i)=>i%3===0||i===13?`<text x="${pts[i][0]}" y="130" text-anchor="middle" font-size="9" fill="var(--mu)">${x.l}</text>`:"").join("")}</svg></div></div>`;
+  $("r").innerHTML=h;
+}
+
+/* ---------- Settings ---------- */
+function renderS(){
+  $("s").innerHTML=`<div class="g2"><div class="cd"><h2>Shop settings</h2><div class="row" style="align-items:flex-start"><div class="fld"><label for="sn">Shop name</label><input id="sn" value="${esc(S.cfg.shop)}"></div><div class="fld"><label for="sa">Time per client (minutes)</label><input id="sa" type="number" min="1" value="${S.cfg.avg}"><small>Used to estimate how long each waiting client will wait.</small></div><div class="fld"><label for="sc">WhatsApp country code</label><input id="sc" inputmode="numeric" value="${esc(S.cfg.cc)}"><small>Added before phone numbers. India is 91.</small></div></div>
+  <div style="margin-top:12px"><button class="b" onclick="cfgSave()">Save settings</button></div></div>
+  <div class="cd kc"><h2>Keyboard shortcuts</h2><table class="kt">${KEYS.map(k=>`<tr><td><kbd style="margin:0">${k[0]}</kbd></td><td>${k[1]}</td></tr>`).join("")}</table></div>
+  <div class="cd"><h2>Account &amp; sync</h2><div class="mu">Sign in with the same account on any phone, tablet or computer. The queue, barbers and payments sync live between all of them.</div>${CONFIGURED?`<div style="margin-top:12px"><button class="b g" onclick="signOut()">Sign out</button></div>`:`<div class="mu" style="margin-top:8px">Supabase is not set up yet, so data is saved on this device only.</div>`}</div></div>`;
+}
+function cfgSave(){S.cfg={shop:$("sn").value||"My Barber Shop",avg:+$("sa").value||15,cc:$("sc").value||"91"};saveCfg();toast("Settings saved")}
+
+/* ---------- Shell: render, tabs, keyboard, swipe ---------- */
+function render(f){
+  $("bq").textContent=waiting().length||"";$("shopn").textContent=S.cfg.shop;$("bc").textContent=S.cfg.shop+" / "+NAMES[tab];
+  const a=document.activeElement;if(!f&&a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)&&$("mn").contains(a))return;
+  ({q:renderQ,b:renderB,p:renderP,r:renderR,c:renderC,s:renderS,a:()=>drawA()})[tab]();
+}
+function go(t){if(t===tab)return;const d=TABS.indexOf(t)>TABS.indexOf(tab)?"inr":"inl";tab=t;
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x.dataset.t===t));
+  TABS.forEach(k=>$(k).classList.toggle("tabs-hide",k!==t));$("pt").textContent=NAMES[t];
+  const s=$(t);s.classList.remove("inr","inl");void s.offsetWidth;s.classList.add(d);render(true);scrollTo({top:0});if(t==="a")loadA()}
+$("nav").onclick=e=>{const b=e.target.closest("button");if(b)go(b.dataset.t)};
+$("theme").onclick=()=>{const r=document.documentElement;r.dataset.theme=(r.dataset.theme||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"))==="dark"?"light":"dark"};
+document.addEventListener("keydown",e=>{
+  if(mdOpen)return;const t=e.target;
+  if(/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)){if(e.key==="Escape")t.blur();else if(t.closest("#addf")&&e.key==="Enter"&&t.tagName!=="SELECT"){e.preventDefault();addC()}return}
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  const k=e.key,w=waiting();
+  if(/^[1-7]$/.test(k)){if(TABS[k-1])go(TABS[k-1])}
+  else if(k==="ArrowRight"||k==="ArrowLeft"){const n=TABS[TABS.indexOf(tab)+(k==="ArrowRight"?1:-1)];if(n)go(n)}
+  else if(tab==="q"&&(k==="ArrowDown"||k==="ArrowUp")){e.preventDefault();sel=Math.max(0,Math.min(w.length-1,sel+(k==="ArrowDown"?1:-1)));updSel()}
+  else if(tab==="q"&&k==="Enter"&&w[sel]&&t.tagName!=="BUTTON"&&t.tagName!=="A")startNext(w[sel].id);
+  else switch(k.toLowerCase()){
+    case"n":e.preventDefault();go("q");setTimeout(()=>$("cn")?.focus(),0);break;
+    case"s":startNext();break;
+    case"p":if(serving()[0])finish(serving()[0].id);break;
+    case"w":if(w[sel])window.open(waLink(w[sel],msgFor(w[sel])),"_blank");break;
+    case"x":case"delete":if(tab==="q"&&w[sel])skip(w[sel].id);break;
+    case"/":e.preventDefault();go("c");setTimeout(()=>$("cq")?.focus(),0);break;
+    case"t":$("theme").click();break;
+    case"?":help();break}
+});
+document.addEventListener("click",e=>{const r=e.target.closest("#q .li");if(r&&!e.target.closest("a,button")){sel=+r.dataset.i;updSel()}});
+/* swipe a waiting client: right = start, left = remove */
+let sx=0,sr=null;
+document.addEventListener("pointerdown",e=>{const r=e.target.closest(".sw");if(!r||e.target.closest("a,button")||e.button>0)return;sr=r;sx=e.clientX;r.setPointerCapture(e.pointerId);r.style.transition="none"});
+document.addEventListener("pointermove",e=>{if(sr)sr.style.transform=`translateX(${Math.max(-150,Math.min(150,e.clientX-sx))}px)`});
+const rel=e=>{if(!sr)return;const d=e.clientX-sx,r=sr;sr=null;r.style.transition="";r.style.transform="";if(e.type==="pointerup"){if(d>90)startNext(r.dataset.id);else if(d<-90)skip(r.dataset.id)}};
+document.addEventListener("pointerup",rel);document.addEventListener("pointercancel",rel);
+/* swipe anywhere else: change section */
+let tx=0,ty=0,tok=false;const mn=$("mn");
+mn.addEventListener("touchstart",e=>{tok=!e.target.closest(".sw,input,select,textarea,svg.ch");tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+mn.addEventListener("touchend",e=>{if(!tok)return;const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;
+  if(Math.abs(dx)>80&&Math.abs(dy)<60){const n=TABS[TABS.indexOf(tab)+(dx<0?1:-1)];if(n)go(n)}},{passive:true});
+
+let curDay=today();
+function dayCheck(){if(today()!==curDay){curDay=today();sel=0;render(true);toast("New day started. Token numbers restart from #1.")}}
+setInterval(dayCheck,30000);document.addEventListener("visibilitychange",dayCheck);addEventListener("focus",dayCheck);
+render(true);flash("Local mode (no sync)");
+
+/* ---------- Supabase: sign-in, live sync, remote on/off ---------- */
+/* 1) Paste your project values (Supabase > Project Settings > API). The anon key is safe to put here. */
+const SUPABASE_URL="https://uushrepwtpjvrsxenagc.supabase.co",SUPABASE_KEY="sb_publishable_5bOCsm3JdfGQQDup6zmUkw_EcZWdri5";
+const CONFIGURED=!/^PASTE/.test(SUPABASE_URL)&&!!window.supabase;
+/* Set to true after enabling Google in Supabase > Authentication > Providers */
+const GOOGLE_LOGIN=false;
+let sb=null,shopId=null,synced=false,beat=null,dataCh=null,shopCh=null,flushing=false,firstSub=true,needLogin=false;
+const COLS=["queue","barbers","customers","meta"],cache={queue:{},barbers:{},customers:{},meta:{}},subs={queue:[],barbers:[],customers:[],meta:[]};
+const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},lsDel=k=>{try{localStorage.removeItem(k)}catch(e){}};
+let pend=[];try{pend=JSON.parse(lsGet("bsm-pend")||"[]")}catch(e){}
+const savePend=()=>lsSet("bsm-pend",JSON.stringify(pend));
+const lockGet=()=>{try{return JSON.parse(lsGet("bsm-lock")||"null")}catch(e){return null}};
+
+/* full-screen gate: login, "switched off", etc. */
+function gate(h){$("gate").innerHTML=`<div class="mb">${h}</div>`;$("gate").hidden=false;mdOpen=true}
+function ungate(){$("gate").hidden=true;$("gate").innerHTML="";needLogin=false;mdOpen=false}
+const gateBtns=`<div class="row" style="justify-content:flex-end;margin-top:22px"><button class="b g" onclick="signOut()">Sign out</button><button class="b" onclick="check()">Try again</button></div>`;
+function lockUI(msg){gate(`<h2>App switched off</h2><div class="mu" style="margin-top:8px">${esc(msg||"This app has been turned off. Please contact your provider.")}</div>${gateBtns}`)}
+function loginUI(err,up,em){needLogin=true;stopSync();
+  gate(`<h2>${up?"Create account":"Sign in"}</h2><div class="mu">${up?"Create your account. The provider will activate it for you.":"Sign in to your shop."}</div><div id="mf"><label for="le">Email</label><input id="le" type="email" autocomplete="username" value="${esc(em||"")}"><label for="lp">Password</label><input id="lp" type="password" autocomplete="${up?"new-password":"current-password"}"></div><div class="mu" style="color:var(--dg);margin-top:10px;min-height:18px">${esc(err||"")}</div><div class="row" style="justify-content:flex-end;margin-top:14px">${GOOGLE_LOGIN?'<button class="b g" id="gg">Continue with Google</button>':""}<button class="b ok" id="lg">${up?"Create account":"Sign in"}</button></div><div class="mu" style="text-align:center;margin-top:16px"><a href="#" id="sw" style="color:var(--ac);font-weight:700">${up?"Already have an account? Sign in":"New here? Create an account"}</a></div>`);
+  if($("gg"))$("gg").onclick=()=>sb.auth.signInWithOAuth({provider:"google",options:{redirectTo:location.origin+location.pathname}});
+  $("sw").onclick=e=>{e.preventDefault();loginUI("",!up,$("le").value)};
+  const go=async()=>{const email=$("le").value.trim(),password=$("lp").value;if(!email||!password){loginUI("Enter email and password",up,email);return}
+    if(up&&password.length<6){loginUI("Password must be at least 6 characters",up,email);return}
+    $("lg").classList.add("ld");
+    const r=up?await sb.auth.signUp({email,password}):await sb.auth.signInWithPassword({email,password});
+    if(r.error){loginUI(r.error.message,up,email);return}
+    if(!r.data.session){loginUI("Account created. Check your email to confirm it, then sign in.",false,email);return}
+    needLogin=false;gate('<div class="mu">Loading…</div>');await check();if(!beat)beat=setInterval(check,45000)};
+  $("lg").onclick=go;$("lp").onkeydown=e=>{if(e.key==="Enter")go()};$("le").onkeydown=e=>{if(e.key==="Enter")$("lp").focus()};($("le").value?$("lp"):$("le")).focus()}
+async function signOut(){try{await sb.auth.signOut()}catch(e){}["bsm-shop","bsm-pend","bsm-lock",LOCAL_KEY].forEach(lsDel);location.reload()}
+
+/* writes go through a small retry queue so nothing is lost while offline */
+async function runOp(o){const q=sb.from("docs"),{error}=o.t==="s"?await q.upsert({shop_id:o.s,col:o.c,id:o.i,data:o.d,updated_at:new Date().toISOString()}):await q.delete().match({shop_id:o.s,col:o.c,id:o.i});if(error)throw error}
+async function flush(){if(flushing)return false;flushing=true;
+  try{while(pend.length){try{await runOp(pend[0])}catch(e){if(e.code){pend.shift();savePend();continue}flash("Offline · will sync when back online");return false}pend.shift();savePend()}return true}finally{flushing=false}}
+async function op(o){const c=cache[o.c];if(c){if(o.t==="s")c[o.i]=o.d;else delete c[o.i]}pend.push(o);savePend();await flush()}
+function notify(c){if(c==="meta"){const v=cache.meta.cfg;subs.meta.forEach(f=>f({exists:!!v,data:()=>v}))}else{const docs=Object.entries(cache[c]).map(([id,v])=>({id,data:()=>v}));subs[c].forEach(f=>f({docs}))}}
+const makeDb=()=>({
+  collection:c=>({doc:id=>({set:o=>op({t:"s",s:shopId,c,i:id,d:o}),delete:()=>op({t:"d",s:shopId,c,i:id})}),onSnapshot:f=>{subs[c].push(f);notify(c)}}),
+  doc:p=>{const[c,i]=p.split("/");return{set:o=>op({t:"s",s:shopId,c,i,d:o}),onSnapshot:f=>{subs[c].push(f);notify(c)}}}});
+async function pull(id){let rows=[],from=0;
+  for(;;){const{data,error}=await sb.from("docs").select("col,id,data").eq("shop_id",id).order("col").order("id").range(from,from+999);if(error)throw error;rows=rows.concat(data);if(data.length<1000)break;from+=1000}
+  COLS.forEach(c=>cache[c]={});rows.forEach(r=>{if(cache[r.col])cache[r.col][r.id]=r.data});return rows.length}
+async function resync(){if(!synced)return;try{if(await flush()){await pull(shopId);COLS.forEach(notify)}}catch(e){}}
+function stopSync(){synced=false;db=null;firstSub=true;COLS.forEach(c=>{subs[c]=[]});if(dataCh){sb.removeChannel(dataCh);dataCh=null}}
+async function startSync(id){
+  if(synced)return;synced=true;shopId=id;
+  const prev=lsGet("bsm-shop");
+  if(prev&&prev!==id){S.queue=[];S.barbers=[];S.customerProfiles={};pend=pend.filter(o=>o.s===id);savePend()}
+  lsSet("bsm-shop",id);
+  try{
+    if(!(await flush()))throw new Error("offline");
+    const n=await pull(id);
+    if(!n&&!prev){ /* first sign-in on a device that already has local data: upload it */
+      const up=[...S.queue.map(x=>["queue",x.id,x]),...S.barbers.map(x=>["barbers",x.id,x]),...Object.entries(S.customerProfiles).map(([k,v])=>["customers",k,v]),["meta","cfg",S.cfg]];
+      const{error}=await sb.from("docs").upsert(up.map(([c,i,d])=>({shop_id:id,col:c,id:i,data:d})));if(error)throw error;
+      up.forEach(([c,i,d])=>{cache[c][i]=d})}
+  }catch(e){synced=false;flash(/offline|fetch|network/i.test(e.message||"")?"Offline · saved on this device":"Sync error");return}
+  db=makeDb();
+  db.collection("queue").onSnapshot(s=>{S.queue=s.docs.map(d=>({id:d.id,...d.data()}));persistLocal();render()});
+  db.collection("barbers").onSnapshot(s=>{S.barbers=s.docs.map(d=>({id:d.id,...d.data()}));persistLocal();render()});
+  db.collection("customers").onSnapshot(s=>{S.customerProfiles={};s.docs.forEach(d=>S.customerProfiles[d.id]=d.data());persistLocal();render()});
+  db.doc("meta/cfg").onSnapshot(d=>{if(d.exists&&d.data())S.cfg={...S.cfg,...d.data()};persistLocal();render()});
+  dataCh=sb.channel("docs-"+id).on("postgres_changes",{event:"*",schema:"public",table:"docs"},p=>{
+      const r=p.eventType==="DELETE"?p.old:p.new;if(!r||r.shop_id!==id||!cache[r.col])return;
+      if(p.eventType==="DELETE")delete cache[r.col][r.id];else cache[r.col][r.id]=r.data;notify(r.col)})
+    .subscribe(st=>{if(st==="SUBSCRIBED"){flash("Live · synced");if(!firstSub)resync();firstSub=false}else if(st==="CHANNEL_ERROR"||st==="TIMED_OUT"||st==="CLOSED")flash("Reconnecting…")});
+}
+/* remote on/off: instant via realtime, plus a check every 45 s as a safety net */
+function watchShop(id){if(shopCh)return;shopCh=sb.channel("shop-"+id).on("postgres_changes",{event:"UPDATE",schema:"public",table:"shops",filter:"id=eq."+id},()=>check()).subscribe()}
+function applyStatus(st){
+  if(st){lsSet("bsm-lock",JSON.stringify({active:st.active,message:st.message}));watchShop(st.id)}else lsDel("bsm-lock");
+  /* the owner is never locked out: with no active shop they just get the Admin panel */
+  if(isAdmin&&(!st||!st.active)){stopSync();ungate();adminOnly(true);return}
+  adminOnly(false);
+  if(!st){stopSync();gate(`<h2>No shop linked</h2><div class="mu" style="margin-top:8px">${esc(myEmail)||"This account"} isn’t linked to a shop yet. Please contact your provider and give them this email.</div>${gateBtns}`);return}
+  if(!st.active){stopSync();lockUI(st.message);return}
+  ungate();startSync(st.id)}
+async function check(){
+  if(!sb||needLogin)return;
+  const{data:st,error}=await sb.rpc("shop_status");
+  if(error){const m=error.message||"";
+    if(error.status===401||/JWT|not authenticated/i.test(m)){loginUI("Session expired. Please sign in again.");return}
+    if(!error.status||/fetch|network/i.test(m)){const l=lockGet();if(l&&l.active===false)lockUI(l.message);else{ungate();flash("Offline · saved on this device")}return}
+    ungate();flash("Sync error");return}
+  if(!adminChecked){const{data:a,error:e2}=await sb.rpc("is_admin");if(!e2){adminChecked=true;isAdmin=!!a;if(isAdmin)addAdminTab()}
+    const{data:ss}=await sb.auth.getSession();myEmail=ss?.session?.user?.email||""}
+  applyStatus(st)}
+
+/* ---------- Admin tab (visible only to owner accounts) ---------- */
+let isAdmin=false,adminChecked=false,myEmail="",adm=[];
+function addAdminTab(){if(TABS.includes("a"))return;TABS.push("a");NAMES.a="Admin";
+  const b=document.createElement("button");b.dataset.t="a";b.innerHTML='<svg class="ic"><use href="#i-c"/></svg><span>Admin</span><kbd>7</kbd>';$("nav").append(b);
+  setInterval(()=>{if(tab==="a")loadA()},10000)}
+function adminOnly(on){document.querySelectorAll("#nav button").forEach(b=>{if(b.dataset.t!=="a")b.style.display=on?"none":""});if(on)go("a")}
+async function loadA(){if(!sb||!isAdmin)return;
+  const{data,error}=await sb.from("shops").select("*").order("created_at");if(error){toast(error.message,"er");return}
+  adm=data;const f=document.activeElement;if(tab==="a"&&!(f&&f.tagName==="INPUT"&&$("a").contains(f)))drawA()}
+function drawA(){const el=$("a");if(!el)return;const now=Date.now(),td=today();
+  const pend=s=>!s.active&&!s.last_seen,list=adm.slice().sort((x,y)=>(pend(y)-pend(x))||(new Date(y.created_at)-new Date(x.created_at))),np=adm.filter(pend).length;
+  el.innerHTML=`<div class="stats"><div><b>${adm.length}</b><span class="mu">Accounts</span></div><div><b>${adm.filter(s=>s.active).length}</b><span class="mu">Switched on</span></div><div><b>${np}</b><span class="mu">Waiting for you</span></div></div>
+  <div class="g2">`+
+  (list.length?list.map(s=>{const live=s.last_seen&&now-new Date(s.last_seen)<120000,exp=s.plan_expires&&s.plan_expires<td,on=s.active&&!exp,wait=pend(s);
+    return `<div class="cd"><div class="row sp"><div><b>${esc(s.name)}</b><div class="mu">${esc(s.email||"No email")}</div><div class="mu" style="${live?"color:var(--ok)":""}">${wait?"New sign-up · not opened yet":live?"● Online now":s.last_seen?"Last seen "+new Date(s.last_seen).toLocaleString():"Never opened"}</div></div>
+    <div class="row"><span class="tok" style="background:var(--${on?"ok":"dg"})">${exp?"EXPIRED":wait?"NEW":s.active?"ON":"OFF"}</span><button class="b ${s.active?"dg":"ok"}" onclick="admActive('${s.id}',${!s.active})">${s.active?"Turn OFF":"Turn ON"}</button></div></div>
+    <div class="row" style="align-items:flex-start;margin-top:6px"><div class="fld"><label>Shop name</label><input value="${esc(s.name)}" onchange="admUpd('${s.id}',{name:this.value.trim()||'Shop'})"></div>
+    <div class="fld"><label>Message shown when off</label><input value="${esc(s.message)}" placeholder="e.g. Subscription unpaid, call me" onchange="admUpd('${s.id}',{message:this.value})"></div>
+    <div class="fld"><label>Auto-off after</label><input type="date" value="${esc(s.plan_expires||"")}" onchange="admUpd('${s.id}',{plan_expires:this.value||null})"></div></div>
+    <div class="row" style="justify-content:space-between;margin-top:12px"><button class="b g" onclick="admView('${s.id}')">👁 View their data</button><button class="b g" onclick="admDel('${s.id}')">Delete</button></div></div>`}).join(""):`<div class="cd">${empty("No accounts yet. When a client creates an account it appears here.")}</div>`)+"</div>"}
+async function admView(id){const s=adm.find(x=>x.id===id);if(!s)return;
+  let rows=[],from=0;for(;;){const{data,error}=await sb.from("docs").select("col,id,data").eq("shop_id",id).in("col",["queue","barbers","customers"]).order("col").order("id").range(from,from+999);if(error){toast(error.message,"er");return}rows=rows.concat(data);if(data.length<1000)break;from+=1000}
+  const q=rows.filter(r=>r.col==="queue").map(r=>r.data),bs=rows.filter(r=>r.col==="barbers").map(r=>r.data),td=today(),m=month();
+  const dn=q.filter(x=>x.status==="done"&&x.doneAt),sum=a=>a.reduce((t,x)=>t+(+x.price||0),0),dT=dn.filter(x=>ld(x.doneAt)===td),dM=dn.filter(x=>ld(x.doneAt).slice(0,7)===m);
+  const recent=q.filter(x=>x.date===td).sort((a,b)=>b.token-a.token).slice(0,10);
+  await ask({t:esc(s.name),p:esc(s.email||""),ok:"Close",c:"Close",f:`<table class="kt"><tr><td>Today</td><td><b>${money(sum(dT))}</b> · ${dT.length} clients</td></tr><tr><td>This month</td><td><b>${money(sum(dM))}</b> · ${dM.length} clients</td></tr><tr><td>Barbers</td><td>${bs.length}${bs.length?" ("+bs.map(b=>esc(b.name)).join(", ")+")":""}</td></tr><tr><td>Saved clients</td><td>${rows.filter(r=>r.col==="customers").length}</td></tr></table><div class="mu" style="margin-top:12px">Today’s queue</div>${recent.length?recent.map(x=>`<div class="mu" style="padding:5px 0;border-top:1px solid var(--bd)">#${x.token} ${esc(x.name)} · ${esc(x.service)} · ${esc(x.status)}</div>`).join(""):'<div class="mu">No clients today</div>'}`})}
+async function admActive(id,v){const{error}=await sb.from("shops").update({active:v}).eq("id",id);toast(error?error.message:v?"Shop switched ON":"Shop switched OFF",error?"er":"");loadA()}
+async function admUpd(id,o){const{error}=await sb.from("shops").update(o).eq("id",id);toast(error?error.message:"Saved",error?"er":"");loadA()}
+async function admDel(id){const s=adm.find(x=>x.id===id);if(s&&await ask({t:"Delete shop?",p:esc(s.name)+" and ALL its data will be deleted for good.",ok:"Delete",d:1})){const{error}=await sb.from("shops").delete().eq("id",id);toast(error?error.message:"Shop deleted",error?"er":"");loadA()}}
+
+(async()=>{
+  if(!CONFIGURED){flash("Local mode (Supabase not set up)");return}
+  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+  gate('<div class="mu">Loading…</div>');
+  sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT")loginUI()});
+  const{data}=await sb.auth.getSession();
+  if(!data.session){loginUI();return}
+  await check();beat=setInterval(check,45000);
+  addEventListener("online",()=>{check();resync()});document.addEventListener("visibilitychange",()=>{if(!document.hidden)check()});
+})();
+</script></body></html>
